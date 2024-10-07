@@ -7,7 +7,7 @@ echo "ISSUE_NUMBER: $ISSUE_NUMBER"
 echo "OPENAI_API_KEY: $OPENAI_API_KEY"
 
 # Exit immediately if a command exits with a non-zero status.
-set -e
+# set -e
 
 # Get inputs from the environment
 GITHUB_TOKEN="$1"
