@@ -1,2 +1,2 @@
 # AutoCoder
-Hyperskill course
+AutoCoder is an innovative tool designed to streamline coding tasks through intelligent automation. It leverages advanced algorithms to generate code snippets, optimize workflows, and enhance productivity. Ideal for developers of all levels, AutoCoder supports multiple programming languages and integrates seamlessly with popular IDEs. Join the community, contribute, and revolutionize your coding experience!
