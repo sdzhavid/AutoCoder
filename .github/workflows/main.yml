@@ -34,7 +34,7 @@ jobs:
           REPOSITORY: ${{ github.repository }}  # The full repository name
           ISSUE_NUMBER: ${{ github.event.issue.number }}  # The issue number
         run: |
-          chmod +x ./script.sh
+          chmod +x ../../scripts/script.sh
           ./script.sh "${GITHUB_TOKEN}" "${REPOSITORY}" "${ISSUE_NUMBER}" "${OPENAI_API_KEY}"
 
       - name: Upload Artifact
