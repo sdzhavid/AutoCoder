@@ -1,0 +1,15 @@
+name: AutoCoder Workflow
+
+on:
+  push:
+
+jobs:
+  say_hello:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Greeting message
+        run: echo "Hello, world"
