@@ -9,7 +9,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout
+        uses: actions/checkout@v2
 
       - name: Greeting message
         run: echo "Hello, world"
