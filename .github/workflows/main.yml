@@ -25,3 +25,43 @@ jobs:
           echo "Issue Body: ${ISSUE_BODY}"
           echo "Issue Assignees: ${ISSUE_ASSIGNEES}"
           echo "Issue Labels: ${ISSUE_LABELS}"
+          
+      - name: Check for autocoder-bot label
+        id: check_label
+        run: |
+          if [[ "${{ github.event.issue.labels }}" == *"autocoder-bot"* ]]; then
+            echo "Label found. Proceeding with script execution."
+            echo "true" > is_autocoder_label.txt
+          else
+            echo "Label not found. Exiting."
+            echo "false" > is_autocoder_label.txt
+          fi
+      - name: Generate Code with ChatGPT
+        if: steps.check_label.outputs.is_autocoder_label == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the GitHub token secret
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}  # Your OpenAI API key secret
+          REPOSITORY: ${{ github.repository }}  # The full repository name
+          ISSUE_NUMBER: ${{ github.event.issue.number }}  # The issue number
+        run: |
+          chmod +x ./script.sh
+          ./script.sh "${GITHUB_TOKEN}" "${REPOSITORY}" "${ISSUE_NUMBER}" "${OPENAI_API_KEY}"
+      - name: Upload Artifact
+        if: steps.check_label.outputs.is_autocoder_label == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: autocoder-artifact
+          path: autocoder-bot/
+
+      - name: Download Artifact
+        if: steps.check_label.outputs.is_autocoder_label == 'true'
+        uses: actions/download-artifact@v3
+        with:
+          name: autocoder-artifact
+          path: autocoder-artifact/
+
+      - name: List Generated Code Files
+        if: steps.check_label.outputs.is_autocoder_label == 'true'
+        run: |
+          echo "Listing files in the autocoder-artifact directory:"
+          ls -R autocoder-artifact/
