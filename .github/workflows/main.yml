@@ -30,7 +30,7 @@ jobs:
       - name: Generate Code with ChatGPT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the GitHub token secret
-          OPENAI_API_KEY: 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
+          OPENAI_API_KEY: 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
           REPOSITORY: ${{ github.repository }}  # The full repository name
           ISSUE_NUMBER: ${{ github.event.issue.number }}  # The issue number
         run: |
