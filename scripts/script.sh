@@ -46,7 +46,7 @@ send_prompt_to_chatgpt() {
         exit 1
     fi
 
-    echo "$RESPONSE"
+    echo "OpenAI API Response: $RESPONSE"  # Log the full response for debugging
 }
 
 
@@ -81,6 +81,13 @@ MESSAGES_JSON=$(jq -n --arg body "$FULL_PROMPT" '[{"role": "user", "content": $b
 
 # Send the prompt to the ChatGPT model
 RESPONSE=$(send_prompt_to_chatgpt)
+# Check if the response contains an error message
+ERROR_MESSAGE=$(echo "$RESPONSE" | jq -r '.error.message // empty')
+
+if [[ -n "$ERROR_MESSAGE" ]]; then
+    echo "Error from OpenAI API: $ERROR_MESSAGE"
+    exit 1
+fi
 
 if [[ -z "$RESPONSE" ]]; then
     echo "No response received from the OpenAI API."
@@ -91,8 +98,10 @@ fi
 # Make sure that the extracted content is valid JSON
 FILES_JSON=$(echo "$RESPONSE" | jq -e '.choices[0].message.content | fromjson' 2> /dev/null)
 
-if [[ -z "$FILES_JSON" ]]; then
-    echo "No valid JSON dictionary found in the response or the response was not valid JSON. Please rerun the job."
+# Check for errors in the OpenAI response
+if [[ $? -ne 0 ]]; then
+    echo "Error: Failed to parse JSON response from OpenAI."
+    echo "OpenAI API Response: $RESPONSE"  # Log the raw response that caused the failure
     exit 1
 fi
 
