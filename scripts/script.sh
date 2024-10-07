@@ -1,9 +1,19 @@
 #!/bin/bash
 
 echo "In here"
+echo "GITHUB_TOKEN: $GITHUB_TOKEN"
+echo "REPOSITORY: $REPOSITORY"
+echo "ISSUE_NUMBER: $ISSUE_NUMBER"
+echo "OPENAI_API_KEY: $OPENAI_API_KEY"
 
 # Exit immediately if a command exits with a non-zero status.
 set -e
+
+# Check if any of the environment variables are empty
+if [[ -z "$GITHUB_TOKEN" || -z "$REPOSITORY" || -z "$ISSUE_NUMBER" || -z "$OPENAI_API_KEY" ]]; then
+    echo "Error: Missing one or more required environment variables."
+    exit 1
+fi
 
 # Get inputs from the environment
 GITHUB_TOKEN="$1"
@@ -13,16 +23,30 @@ OPENAI_API_KEY="$4"
 
 # Function to fetch issue details from GitHub API
 fetch_issue_details() {
-    curl -s -H "Authorization: token $GITHUB_TOKEN" \
-         "https://api.github.com/repos/$REPOSITORY/issues/$ISSUE_NUMBER"
+    RESPONSE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                 "https://api.github.com/repos/$REPOSITORY/issues/$ISSUE_NUMBER")
+
+    if [[ -z "$RESPONSE" || "$RESPONSE" == "Not Found" ]]; then
+        echo "Error: Failed to fetch issue details from GitHub."
+        exit 1
+    fi
+
+    echo "$RESPONSE"
 }
 
 # Function to send prompt to the ChatGPT model (OpenAI API)
 send_prompt_to_chatgpt() {
-curl -s -X POST "https://api.openai.com/v1/chat/completions" \
-    -H "Authorization: Bearer $OPENAI_API_KEY" \
-    -H "Content-Type: application/json" \
-    -d "{\"model\": \"gpt-3.5-turbo\", \"messages\": $MESSAGES_JSON, \"max_tokens\": 500}"
+    RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
+        -H "Authorization: Bearer $OPENAI_API_KEY" \
+        -H "Content-Type: application/json" \
+        -d "{\"model\": \"gpt-3.5-turbo\", \"messages\": $MESSAGES_JSON, \"max_tokens\": 500}")
+
+    if [[ -z "$RESPONSE" ]]; then
+        echo "Error: No response received from the OpenAI API."
+        exit 1
+    fi
+
+    echo "$RESPONSE"
 }
 
 
