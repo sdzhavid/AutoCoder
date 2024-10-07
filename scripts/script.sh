@@ -9,17 +9,17 @@ echo "OPENAI_API_KEY: $OPENAI_API_KEY"
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
-# Check if any of the environment variables are empty
-if [[ -z "$GITHUB_TOKEN" || -z "$REPOSITORY" || -z "$ISSUE_NUMBER" || -z "$OPENAI_API_KEY" ]]; then
-    echo "Error: Missing one or more required environment variables."
-    exit 1
-fi
-
 # Get inputs from the environment
 GITHUB_TOKEN="$1"
 REPOSITORY="$2"
 ISSUE_NUMBER="$3"
 OPENAI_API_KEY="$4"
+
+# Check if any of the environment variables are empty
+if [[ -z "$GITHUB_TOKEN" || -z "$REPOSITORY" || -z "$ISSUE_NUMBER" || -z "$OPENAI_API_KEY" ]]; then
+    echo "Error: Missing one or more required environment variables."
+    exit 1
+fi
 
 # Function to fetch issue details from GitHub API
 fetch_issue_details() {
