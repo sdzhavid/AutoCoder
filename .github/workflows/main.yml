@@ -13,6 +13,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
+      - name: Set permissions for script.sh
+        run: chmod +x ./scripts/script.sh
+
       - name: Generate Code with ChatGPT
         id: generate_code
         env:
@@ -20,8 +23,8 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           REPOSITORY: ${{ github.repository }}  # The full repository name
           ISSUE_NUMBER: ${{ github.event.issue.number }}  # The issue number
-        run: chmod +x ./scripts/script.sh && ./scripts/script.sh "${GITHUB_TOKEN}" "${REPOSITORY}" "${ISSUE_NUMBER}" "${OPENAI_API_KEY}"
-
+        run: ./scripts/script.sh $GITHUB_TOKEN $REPOSITORY $ISSUE_NUMBER $OPENAI_API_KEY
+        
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
