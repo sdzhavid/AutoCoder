@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Exit immediately if a command exits with a non-zero status.
-set -e
+# set -e
 
 # Get inputs from the environment
 GITHUB_TOKEN="$1"
@@ -9,18 +9,47 @@ REPOSITORY="$2"
 ISSUE_NUMBER="$3"
 OPENAI_API_KEY="$4"
 
+# Check if any of the environment variables are empty
+if [[ -z "$GITHUB_TOKEN" || -z "$REPOSITORY" || -z "$ISSUE_NUMBER" || -z "$OPENAI_API_KEY" ]]; then
+    echo "Error: Missing one or more required environment variables."
+    exit 1
+fi
+
 # Function to fetch issue details from GitHub API
 fetch_issue_details() {
-    curl -s -H "Authorization: token $GITHUB_TOKEN" \
-         "https://api.github.com/repos/$REPOSITORY/issues/$ISSUE_NUMBER"
+    RESPONSE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                 "https://api.github.com/repos/$REPOSITORY/issues/$ISSUE_NUMBER")
+
+    if [[ -z "$RESPONSE" || "$RESPONSE" == "Not Found" ]]; then
+        echo "Error: Failed to fetch issue details from GitHub."
+        exit 1
+    fi
+
+    echo "$RESPONSE"
 }
 
 # Function to send prompt to the ChatGPT model (OpenAI API)
 send_prompt_to_chatgpt() {
-curl -s -X POST "https://api.openai.com/v1/chat/completions" \
-    -H "Authorization: Bearer $OPENAI_API_KEY" \
-    -H "Content-Type: application/json" \
-    -d "{\"model\": \"gpt-3.5-turbo\", \"messages\": $MESSAGES_JSON, \"max_tokens\": 500}"
+    # JSON payload with a specific message
+    MESSAGES_JSON='[
+        {"role": "user", "content": "Say hello world"}
+    ]'
+
+    RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
+        -H "Authorization: Bearer $OPENAI_API_KEY" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "model": "gpt-3.5-turbo",
+          "messages": '"$MESSAGES_JSON"',
+          "max_tokens": 500
+        }')
+
+    if [[ -z "$RESPONSE" ]]; then
+        echo "Error: No response received from the OpenAI API."
+        exit 1
+    fi
+
+    echo "$RESPONSE"
 }
 
 
@@ -55,6 +84,13 @@ MESSAGES_JSON=$(jq -n --arg body "$FULL_PROMPT" '[{"role": "user", "content": $b
 
 # Send the prompt to the ChatGPT model
 RESPONSE=$(send_prompt_to_chatgpt)
+# Check if the response contains an error message
+ERROR_MESSAGE=$(echo "$RESPONSE" | jq -r '.error.message // empty')
+
+if [[ -n "$ERROR_MESSAGE" ]]; then
+    echo "Error from OpenAI API: $ERROR_MESSAGE"
+    exit 1
+fi
 
 if [[ -z "$RESPONSE" ]]; then
     echo "No response received from the OpenAI API."
@@ -65,8 +101,10 @@ fi
 # Make sure that the extracted content is valid JSON
 FILES_JSON=$(echo "$RESPONSE" | jq -e '.choices[0].message.content | fromjson' 2> /dev/null)
 
-if [[ -z "$FILES_JSON" ]]; then
-    echo "No valid JSON dictionary found in the response or the response was not valid JSON. Please rerun the job."
+# Check for errors in the OpenAI response
+if [[ $? -ne 0 ]]; then
+    echo "Error: Failed to parse JSON response from OpenAI."
+    echo "OpenAI API Response: $RESPONSE"  # Log the raw response that caused the failure
     exit 1
 fi
 
